@@ -1,6 +1,7 @@
 # private
 /config
 /data
+*_output.csv
 
 .idea/
 temp

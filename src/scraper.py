@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import pandas as pd
 from bs4 import BeautifulSoup
 
@@ -41,11 +42,9 @@ def extract_more_data(soup: BeautifulSoup, html_elements: {}, k: int, df: pd.Dat
 
 
 def scrape_from_file(html_dir: str, htmls) -> pd.DataFrame:
-    df = pd.DataFrame()
-    k = 0
+    k = 1
     filenames = os.listdir(html_dir)
-    html_output_file = htmls['html_output_file']
-
+    df = pd.DataFrame()
 
     for filename in filenames:
         if filename.endswith('.html'):
@@ -55,11 +54,21 @@ def scrape_from_file(html_dir: str, htmls) -> pd.DataFrame:
                     soup = BeautifulSoup(f, 'html.parser')
                     # pretty_html = soup.prettify()
                     df = extract_more_data(soup, htmls, k, df)
+                    df += df
+                    df = save_batches(df, k)
                     k += 1
-                df += df
-            except:
-                pass
-    df.to_csv(html_output_file, index=False)
+            except Exception as e:
+                print(e)
+    df.to_csv(f'../{k}_batch_output.csv', index=False)
+    return df
+
+
+def save_batches(df: pd.DataFrame, k: int) -> pd.DataFrame:
+    if k % 10 == 0:
+        df.to_csv(f'../{k}_batch_output.csv', index=False)
+        print(f'{k} batch saved')
+        del df
+        return pd.DataFrame()
     return df
 
 
@@ -68,6 +77,8 @@ def main():
     html_dir = '../data/html_websites'
 
     scrape_from_file(html_dir, htmls)
+
+    # TODO: combine all saved dfs and remove old ones, select columns for nlp categorizer
 
 if __name__ == '__main__':
     main()
